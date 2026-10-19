@@ -1,1 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>GridOS — Workspace</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
 
+  <!-- Retro Taskbar Header -->
+  <header class="retro-taskbar">
+    <div class="brand-badge">
+      <div class="brand-icon">★</div>
+      <span>GridOS / <span style="color: var(--retro-orange);">{{ username }}</span></span>
+    </div>
+    <div style="display: flex; gap: 8px;">
+      <a href="{{ url_for('undo') }}" class="retro-btn">[ ↶ UNDO ]</a>
+      <a href="{{ url_for('export_csv') }}" class="retro-btn teal">[ ↓ EXPORT CSV ]</a>
+      <a href="{{ url_for('logout') }}" class="retro-btn pink">[ ✕ LOGOUT ]</a>
+    </div>
+  </header>
+
+  <!-- Desktop Workspace Layout -->
+  <main class="desktop-layout">
+
+    <!-- Column 1: Config, Tasks, and Habits -->
+    <div>
+
+      <!-- 1. Daily Habit Tracker Window -->
+      <div class="retro-window">
+        <div class="window-header pink">
+          <span>Habit_Streaks.exe</span>
+          <div class="window-controls">_ □ ✕</div>
+        </div>
+        <div class="window-body">
+          <form action="{{ url_for('add_habit') }}" method="POST" style="display: flex; gap: 8px; margin-bottom: 12px;">
+            <input type="text" name="title" placeholder="New Habit (e.g. Gym, LeetCode, Reading)" class="retro-input" required>
+            <button type="submit" class="retro-btn pink">[ + ADD ]</button>
+          </form>
+
+          {% if habits %}
+            {% for h in habits %}
+            <div class="habit-row">
+              <div>
+                <strong>{{ h.title }}</strong>
+                <div style="font-size: 12px; color: #555;">Streak: ❤️ {{ h.streak }} days</div>
+              </div>
+              <div>
+                {% if h.last_completed == today %}
+                  <span class="pixel-pill" style="background: var(--retro-green);">✓ DONE</span>
+                {% else %}
+                  <a href="{{ url_for('toggle_habit', habit_id=h.id) }}" class="retro-btn teal" style="padding: 2px 8px; font-size: 15px;">CHECK IN</a>
+                {% endif %}
+              </div>
+            </div>
+            {% endfor %}
+          {% else %}
+            <p style="font-size: 12px; color: #777; text-align: center;">No daily habits tracked yet. Start a streak!</p>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- 2. Configure Free Study/Life Windows -->
+      <div class="retro-window">
+        <div class="window-header teal">
+          <span>Set_Free_Windows.exe</span>
+          <div class="window-controls">_ □ ✕</div>
+        </div>
+        <div class="window-body">
+          <form action="{{ url_for('add_slot') }}" method="POST">
+            <div class="retro-field">
+              <label>Day of the Week</label>
+              <select name="day_of_week" class="retro-input">
+                <option value="0">Monday</option>
+                <option value="1">Tuesday</option>
+                <option value="2">Wednesday</option>
+                <option value="3">Thursday</option>
+                <option value="4">Friday</option>
+                <option value="5">Saturday</option>
+                <option value="6">Sunday</option>
+              </select>
+            </div>
+            <div class="retro-field-row">
+              <div class="retro-field">
+                <label>Start Hour (0-23)</label>
+                <input type="number" name="start_hour" min="0" max="23" placeholder="18" class="retro-input" required>
+              </div>
+              <div class="retro-field">
+                <label>Duration (Hours)</label>
+                <input type="number" step="0.5" name="duration" placeholder="2.5" class="retro-input" required>
+              </div>
+            </div>
+            <button type="submit" class="retro-btn teal retro-btn-block">[ SAVE RECURRING WINDOW ]</button>
+          </form>
+        </div>
+      </div>
+
+      <!-- 3. Add Task / Life Commitment Window -->
+      <div class="retro-window">
+        <div class="window-header yellow">
+          <span>New_Task_Dialog.exe</span>
+          <div class="window-controls">_ □ ✕</div>
+        </div>
+        <div class="window-body">
+          <form action="{{ url_for('add_task') }}" method="POST">
+            <div class="retro-field">
+              <label>Task Title</label>
+              <input type="text" name="title" placeholder="e.g. DBMS Assignment 4" class="retro-input" required>
+            </div>
+            <div class="retro-field-row">
+              <div class="retro-field">
+                <label>Category</label>
+                <input type="text" name="subject" placeholder="e.g. Study, Gym, Work" class="retro-input" required>
+              </div>
+              <div class="retro-field">
+                <label>Task Type (OOP)</label>
+                <select name="task_type" class="retro-input">
+                  <option value="ACADEMIC">📚 Academic Task</option>
+                  <option value="WORK">💼 Work / Project</option>
+                  <option value="FITNESS">🏋️ Fitness Task</option>
+                  <option value="GENERAL">🛠️ General Task</option>
+                </select>
+              </div>
+            </div>
+            <div class="retro-field-row">
+              <div class="retro-field">
+                <label>Estimated Hours</label>
+                <input type="number" step="0.5" name="estimated_hours" placeholder="3.0" class="retro-input" required>
+              </div>
+              <div class="retro-field">
+                <label>Priority Weight</label>
+                <select name="priority" class="retro-input">
+                  <option value="1">1 - Low</option>
+                  <option value="3" selected>3 - Medium</option>
+                  <option value="5">5 - Critical</option>
+                </select>
+              </div>
+            </div>
+            <div class="retro-field-row">
+              <div class="retro-field">
+                <label>Deadline</label>
+                <input type="datetime-local" name="deadline" class="retro-input" required>
+              </div>
+              <div class="retro-field">
+                <label>Metadata</label>
+                <input type="text" name="specific_meta" placeholder="Weight% / Chapters" class="retro-input" required>
+              </div>
+            </div>
+            <button type="submit" class="retro-btn retro-btn-block" style="margin-top: 8px;">[ OK: COMPUTE & SCHEDULE ]</button>
+          </form>
+
+          <hr style="border: 0; border-top: 2px dashed var(--border-color); margin: 16px 0;">
+
+          <!-- CSV Import Form -->
+          <form action="{{ url_for('import_csv') }}" method="POST" enctype="multipart/form-data" style="display: flex; gap: 8px;">
+            <input type="file" name="file" accept=".csv" class="retro-input" style="padding: 4px; font-size: 11px;" required>
+            <button type="submit" class="retro-btn" style="padding: 4px 10px; font-size: 15px;">UPLOAD CSV</button>
+          </form>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Column 2: Heuristic Timeline & Analytics -->
+    <div>
+
+      <!-- Auto-Generated Schedule Roadmap -->
+      <div class="retro-window">
+        <div class="window-header orange">
+          <span>Auto_Schedule_Roadmap.exe</span>
+          <div class="window-controls">_ □ ✕</div>
+        </div>
+        <div class="window-body">
+          {% if schedule %}
+            {% for s in schedule %}
+            <div class="timeline-card" style="border-left: 6px solid {{ s.color_tag }};">
+              <div style="display: flex; justify-content: space-between; align-items: baseline;">
+                <span class="pixel-pill" style="background: var(--window-inner);">{{ s.subject }}</span>
+                <span class="pixel-font" style="font-size: 18px; font-weight: bold;">{{ s.session_date }} | {{ s.start_time }} → {{ s.end_time }}</span>
+              </div>
+              <div style="font-weight: bold; font-size: 15px; margin-top: 6px;">{{ s.task_title }}</div>
+            </div>
+            {% endfor %}
+          {% else %}
+            <div style="text-align: center; padding: 24px; color: #666; font-size: 13px;">
+              No sessions scheduled yet! Set your recurring free windows and add pending tasks on the left.
+            </div>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Matplotlib Chart Window -->
+      <div class="retro-window">
+      <div class="window-header teal">
+        <span>Workload_Analytics_Matplotlib.exe</span>
+        <div class="window-controls">_ □ ✕</div>
+      </div>
+      <div class="window-body" style="text-align: center;">
+        {% if schedule %}
+        <!-- Only show the chart if there is actual data! -->
+        <img src="{{ url_for('static', filename='analytics.png') }}?v={{ range(1, 100000) | random }}" 
+           style="width: 100%; border: 2px solid var(--border-color); border-radius: 4px; display: block;" 
+           alt="Workload Distribution Chart">
+        {% else %}
+        <!-- Friendly retro empty state when database is fresh -->
+        <div style="padding: 24px; color: #666; font-size: 13px;">
+          <div style="font-size: 24px; margin-bottom: 8px;"></div>
+          <strong>No analytics data generated yet.</strong>
+          <p style="margin: 4px 0 0; font-size: 12px; color: #888;">Configure your study windows and register tasks to compute your workload distribution!</p>
+        </div>
+      {% endif %}
+    </div>
+    </div>
+      <!-- Task Backlog Checklist -->
+      <div class="retro-window">
+        <div class="window-header yellow">
+          <span>Active_Task_Pool.exe</span>
+          <div class="window-controls">_ □ ✕</div>
+        </div>
+        <div class="window-body">
+          {% if tasks %}
+            {% for t in tasks %}
+            <div class="timeline-card" style="display: flex; justify-content: space-between; align-items: center; {% if t.is_completed %}opacity: 0.4; text-decoration: line-through;{% endif %}">
+              <div>
+                <strong>{{ t.title }}</strong> [{{ t.subject }}]
+                <div style="font-size: 12px; color: #555;">Due: {{ t.deadline }} • Priority: {{ t.priority }}/5</div>
+              </div>
+              {% if not t.is_completed %}
+              <a href="{{ url_for('complete', task_id=t.id) }}" class="retro-btn teal" style="padding: 2px 8px; font-size: 15px;">✓ DONE</a>
+              {% endif %}
+            </div>
+            {% endfor %}
+          {% else %}
+            <p style="text-align: center; font-size: 12px; color: #666;">All caught up! No active tasks.</p>
+          {% endif %}
+        </div>
+      </div>
+
+    </div>
+
+  </main>
+
+</body>
+</html>
